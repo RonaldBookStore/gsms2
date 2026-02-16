@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSS | Enterprise Unified Core</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSQdizSB5wJX4jvGw1oqJRClHthS3jvrw",
+            authDomain: "global-school-system-e7861.firebaseapp.com",
+            projectId: "global-school-system-e7861",
+            storageBucket: "global-school-system-e7861.firebasestorage.app",
+            messagingSenderId: "806768742777",
+            appId: "1:806768742777:web:ac5256a50e4e21faf51fa8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.fs = { collection, addDoc, getDocs, query, orderBy, where, serverTimestamp };
+    </script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: { brand: { 50:'#eef2ff', 100:'#e0e7ff', 200:'#c7d2fe', 500:'#4f46e5', 600:'#4338ca', 700:'#3730a3', 900:'#1e1b4b' } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .sidebar-active { background: #4f46e5; color: white; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
+        .nav-hover:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeScale { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        @keyframes pulse-soft { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        @keyframes countUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-view { animation: slideIn 0.4s ease-out forwards; }
+        .animate-card { animation: fadeScale 0.5s ease-out forwards; }
+        .animate-count { animation: countUp 0.6s ease-out forwards; }
+        .card { @apply bg-white rounded-[2rem] shadow-sm border border-slate-100 transition-all duration-300; }
+        .card:hover { box-shadow: 0 20px 40px -12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+        .stat-icon { @apply w-14 h-14 rounded-2xl flex items-center justify-center text-xl; }
+        .table-row { @apply px-6 py-4 bg-slate-50/50 rounded-2xl flex items-center justify-between hover:bg-brand-50 transition-colors cursor-pointer; }
+        .badge { @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider; }
+        .typing-dot { animation: pulse-soft 1.2s ease-in-out infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 100px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .progress-bar { transition: width 1.5s ease-out; }
+        .notif-badge { @apply absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900 antialiased h-screen overflow-hidden font-sans">
+
+    <!-- ================= LOGIN PAGE ================= -->
+    <div id="loginPage" class="fixed inset-0 z-[100] flex bg-white">
+        <div class="hidden lg:flex w-3/5 relative items-center justify-center overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1523050335192-ce1dee009711?q=80&w=2070&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-br from-brand-900/95 to-indigo-950/80"></div>
+            <div class="relative z-10 p-20 text-white max-w-2xl">
+                <div class="flex items-center gap-4 mb-10">
+                    <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-2xl">
+                        <i class="fas fa-globe-americas text-brand-600 text-3xl"></i>
+                    </div>
+                    <h1 class="text-3xl font-black uppercase tracking-tighter">Global School System</h1>
+                </div>
+                <h2 class="text-6xl font-extrabold leading-tight mb-6">Empowering <br><span class="text-indigo-400">Next-Gen Education.</span></h2>
+                <p class="text-indigo-200 text-lg leading-relaxed">Unified platform powering 50+ institutions, 12,000+ students, and real-time analytics driven by Lumina AI.</p>
+                <div class="flex gap-8 mt-12">
+                    <div><p class="text-4xl font-black">50+</p><p class="text-indigo-300 text-xs font-bold uppercase tracking-widest">Institutions</p></div>
+                    <div class="w-px bg-indigo-700"></div>
+                    <div><p class="text-4xl font-black">12K+</p><p class="text-indigo-300 text-xs font-bold uppercase tracking-widest">Students</p></div>
+                    <div class="w-px bg-indigo-700"></div>
+                    <div><p class="text-4xl font-black">99.9%</p><p class="text-indigo-300 text-xs font-bold uppercase tracking-widest">Uptime</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-2/5 flex items-center justify-center p-12">
+            <div class="w-full max-w-md space-y-8 animate-view">
+                <div>
+                    <h3 class="text-4xl font-black text-slate-900 tracking-tighter">Portal Login</h3>
+                    <p class="text-slate-500 mt-2 font-medium">Select your role to access the core</p>
+                </div>
+                <div class="space-y-4">
+                    <select id="loginRole" class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-3xl font-bold text-slate-700 outline-none focus:border-brand-500 transition-colors">
+                        <option value="SUPER_ADMIN">&#x1f451; Super Admin Core</option>
+                        <option value="SCHOOL_ADMIN">&#x1f3eb; School Admin</option>
+                        <option value="TEACHER">&#x1f469;&#x200d;&#x1f3eb; Teacher</option>
+                        <option value="PARENT">&#x1f46a; Parent Portal</option>
+                        <option value="STUDENT">&#x1f393; Student</option>
+                    </select>
+                    <input id="loginId" type="text" placeholder="Access ID" value="GSS-CORE-001" class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-3xl font-bold outline-none focus:border-brand-500 transition-colors">
+                    <input id="loginPass" type="password" placeholder="Passphrase" value="••••••••" class="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-3xl font-bold outline-none focus:border-brand-500 transition-colors">
+                    <button onclick="handleLogin()" class="w-full py-5 bg-brand-600 hover:bg-brand-500 text-white font-black rounded-3xl shadow-2xl shadow-brand-600/30 transition-all hover:shadow-brand-500/40 active:scale-[0.98]">
+                        LAUNCH PORTAL <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+                <p class="text-center text-slate-400 text-xs font-medium">Secured by AES-256 &bull; v4.2.0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= APP SHELL ================= -->
+    <div id="appShell" class="hidden flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-72 bg-slate-950 text-slate-400 flex flex-col h-full shrink-0 shadow-2xl z-20">
+            <div class="p-8 border-b border-slate-900 flex items-center gap-3">
+                <div class="w-8 h-8 bg-brand-600 rounded-xl text-white flex items-center justify-center font-black text-sm">G</div>
+                <span class="text-white font-bold tracking-widest text-xs uppercase">Enterprise Core</span>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1" id="mainNav"></nav>
+            <div class="p-4 mx-4 mb-2">
+                <button onclick="handleLogout()" class="w-full py-3 text-slate-500 hover:text-red-400 font-bold text-xs uppercase tracking-widest transition-colors rounded-2xl hover:bg-red-500/10">
+                    <i class="fas fa-arrow-right-from-bracket mr-2"></i> Logout
+                </button>
+            </div>
+            <div class="p-5 bg-slate-900/40 m-4 mt-0 rounded-3xl border border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                    <span class="text-[10px] font-black text-slate-300 uppercase tracking-wider">Lumina AI Online</span>
+                </div>
+                <p class="text-[10px] text-slate-600 mt-1 pl-5">13 modules synced</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col relative overflow-hidden">
+            <header class="h-20 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-10 shrink-0 z-10">
+                <div class="flex flex-col">
+                    <h2 id="viewTitle" class="text-xl font-black text-slate-800 tracking-tight">Dashboard</h2>
+                    <span id="roleLabel" class="text-[10px] text-brand-600 font-black uppercase tracking-[0.2em]">Super Admin</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <button onclick="toggleNotif()" class="w-11 h-11 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                            <i class="fas fa-bell text-sm"></i>
+                        </button>
+                        <span class="notif-badge" id="notifCount">5</span>
+                    </div>
+                    <button onclick="toggleAI()" class="px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-600 transition-all">
+                        <i class="fas fa-brain mr-2"></i> Lumina
+                    </button>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="flex items-center gap-3 cursor-pointer group" onclick="toggleProfile()">
+                        <img id="userAvatar" src="https://ui-avatars.com/api/?name=Admin&background=4f46e5&color=fff&bold=true" class="w-10 h-10 rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow">
+                        <div class="hidden md:block">
+                            <p id="userName" class="text-sm font-bold text-slate-700">Administrator</p>
+                            <p id="userRoleSmall" class="text-[10px] text-slate-400 font-medium">Super Admin</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Notification Panel -->
+            <div id="notifPanel" class="absolute right-48 top-20 w-96 bg-white rounded-3xl shadow-2xl border border-slate-100 z-40 hidden animate-card">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h4 class="font-black text-sm">Notifications</h4>
+                    <button class="text-[10px] text-brand-600 font-bold uppercase" onclick="clearNotifs()">Mark all read</button>
+                </div>
+                <div class="p-4 space-y-2 max-h-80 overflow-y-auto" id="notifList">
+                    <div class="p-4 bg-brand-50 rounded-2xl border-l-4 border-brand-500"><p class="text-sm font-bold text-slate-700">New enrollment request</p><p class="text-xs text-slate-500 mt-1">3 minutes ago</p></div>
+                    <div class="p-4 bg-amber-50 rounded-2xl border-l-4 border-amber-500"><p class="text-sm font-bold text-slate-700">Fee payment overdue — 12 students</p><p class="text-xs text-slate-500 mt-1">28 minutes ago</p></div>
+                    <div class="p-4 bg-emerald-50 rounded-2xl border-l-4 border-emerald-500"><p class="text-sm font-bold text-slate-700">Semester report cards generated</p><p class="text-xs text-slate-500 mt-1">1 hour ago</p></div>
+                    <div class="p-4 bg-sky-50 rounded-2xl border-l-4 border-sky-500"><p class="text-sm font-bold text-slate-700">Library inventory sync complete</p><p class="text-xs text-slate-500 mt-1">2 hours ago</p></div>
+                    <div class="p-4 bg-rose-50 rounded-2xl border-l-4 border-rose-500"><p class="text-sm font-bold text-slate-700">Bus #7 maintenance alert</p><p class="text-xs text-slate-500 mt-1">4 hours ago</p></div>
+                </div>
+            </div>
+
+            <!-- View Container -->
+            <div id="viewContainer" class="flex-1 overflow-y-auto p-10"></div>
+        </main>
+
+        <!-- ================= LUMINA AI PANEL ================= -->
+        <div id="aiPanel" class="fixed right-0 top-0 bottom-0 w-[450px] glass border-l translate-x-full transition-transform duration-500 z-50 shadow-2xl flex flex-col">
+            <div class="p-8 bg-slate-950 text-white flex justify-between items-center">
+                <h3 class="font-black text-xs uppercase tracking-[0.3em]"><i class="fas fa-microchip mr-3 text-indigo-400"></i> Lumina Core</h3>
+                <button onclick="toggleAI()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center transition-colors"><i class="fas fa-times text-xs"></i></button>
+            </div>
+            <div class="flex-1 p-6 space-y-4 overflow-y-auto" id="chatWindow">
+                <div class="p-5 bg-brand-600 text-white rounded-3xl rounded-tl-lg text-sm font-medium shadow-xl leading-relaxed">
+                    <p class="font-black text-xs uppercase tracking-widest mb-2 opacity-70">Lumina AI</p>
+                    Institutional Intelligence Active. I am monitoring all core modules in real-time. Ask me about grades, finance, attendance, transport, inventory, or any operational metric.
+                </div>
+            </div>
+            <div class="p-6 bg-white border-t">
+                <div class="flex gap-2">
+                    <input id="aiChatInput" type="text" placeholder="Ask Lumina anything..." class="flex-1 p-4 bg-slate-100 border-none rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all" onkeypress="if(event.key==='Enter') sendToLumina()">
+                    <button onclick="sendToLumina()" class="w-12 h-12 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl flex items-center justify-center transition-colors shrink-0"><i class="fas fa-paper-plane text-sm"></i></button>
+                </div>
+                <div class="flex gap-2 mt-3 flex-wrap">
+                    <button onclick="quickAsk('enrollment stats')" class="px-3 py-1.5 bg-slate-100 rounded-full text-[10px] font-bold text-slate-600 hover:bg-brand-100 hover:text-brand-700 transition-colors">Enrollment Stats</button>
+                    <button onclick="quickAsk('fee overview')" class="px-3 py-1.5 bg-slate-100 rounded-full text-[10px] font-bold text-slate-600 hover:bg-brand-100 hover:text-brand-700 transition-colors">Fee Overview</button>
+                    <button onclick="quickAsk('top performers')" class="px-3 py-1.5 bg-slate-100 rounded-full text-[10px] font-bold text-slate-600 hover:bg-brand-100 hover:text-brand-700 transition-colors">Top Performers</button>
+                    <button onclick="quickAsk('attendance today')" class="px-3 py-1.5 bg-slate-100 rounded-full text-[10px] font-bold text-slate-600 hover:bg-brand-100 hover:text-brand-700 transition-colors">Attendance</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT ENGINE ================= -->
+    <script>
+        // ---- PORTAL DEFINITIONS ----
+        const PORTALS = [
+            { id: 'dash',      label: 'Dashboard',          icon: 'fa-chart-tree-map',     roles: ['SUPER_ADMIN','SCHOOL_ADMIN','TEACHER','PARENT','STUDENT'] },
+            { id: 'school',    label: 'School Management',  icon: 'fa-building-columns',   roles: ['SUPER_ADMIN','SCHOOL_ADMIN'] },
+            { id: 'teacher',   label: 'Academic Desk',      icon: 'fa-chalkboard-user',    roles: ['SUPER_ADMIN','SCHOOL_ADMIN','TEACHER'] },
+            { id: 'exams',     label: 'Assessment Engine',  icon: 'fa-file-circle-check',  roles: ['SUPER_ADMIN','SCHOOL_ADMIN','TEACHER','STUDENT'] },
+            { id: 'parent',    label: 'Parent Portal',      icon: 'fa-people-roof',        roles: ['SUPER_ADMIN','SCHOOL_ADMIN','PARENT'] },
+            { id: 'finance',   label: 'Finance Hub',        icon: 'fa-vault',              roles: ['SUPER_ADMIN','SCHOOL_ADMIN'] },
+            { id: 'library',   label: 'Library Core',       icon: 'fa-book-open-reader',   roles: ['SUPER_ADMIN','SCHOOL_ADMIN','TEACHER','STUDENT'] },
+            { id: 'transport', label: 'Fleet Sync',         icon: 'fa-truck-fast',         roles: ['SUPER_ADMIN','SCHOOL_ADMIN'] },
+            { id: 'inventory', label: 'Stock Logic',        icon: 'fa-warehouse',          roles: ['SUPER_ADMIN','SCHOOL_ADMIN'] },
+            { id: 'api',       label: 'API Gateway',        icon: 'fa-code-branch',        roles: ['SUPER_ADMIN'] }
+        ];
+
+        let role = 'SUPER_ADMIN';
+        let charts = {};
+
+        const ROLE_NAMES = { SUPER_ADMIN: 'Super Administrator', SCHOOL_ADMIN: 'School Administrator', TEACHER: 'Faculty Member', PARENT: 'Parent Guardian', STUDENT: 'Student' };
+        const ROLE_AVATARS = { SUPER_ADMIN: 'Admin+Core', SCHOOL_ADMIN: 'School+Admin', TEACHER: 'Prof+Smith', PARENT: 'Jane+Doe', STUDENT: 'Alex+S' };
+
+        // ---- AUTH ----
+        function handleLogin() {
+            role = document.getElementById('loginRole').value;
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('appShell').classList.remove('hidden');
+            document.getElementById('appShell').classList.add('flex');
+            document.getElementById('roleLabel').textContent = ROLE_NAMES[role] || role.replace('_', ' ');
+            document.getElementById('userRoleSmall').textContent = ROLE_NAMES[role] || role;
+            document.getElementById('userName').textContent = role === 'SUPER_ADMIN' ? 'Administrator' : role === 'TEACHER' ? 'Prof. Smith' : role === 'PARENT' ? 'Jane Doe' : role === 'STUDENT' ? 'Alex Sterling' : 'School Admin';
+            document.getElementById('userAvatar').src = `https://ui-avatars.com/api/?name=${ROLE_AVATARS[role]}&background=4f46e5&color=fff&bold=true`;
+            renderSidebar();
+            navigate('dash', 'Dashboard');
+        }
+
+        function handleLogout() {
+            document.getElementById('appShell').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+            Object.values(charts).forEach(c => c.destroy && c.destroy());
+            charts = {};
+        }
+
+        // ---- SIDEBAR ----
+        function renderSidebar() {
+            const nav = document.getElementById('mainNav');
+            const visiblePortals = PORTALS.filter(p => p.roles.includes(role));
+            nav.innerHTML = visiblePortals.map(p => `
+                <a href="#" onclick="event.preventDefault(); navigate('${p.id}', '${p.label}')" id="link-${p.id}"
+                   class="nav-hover flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all text-sm font-semibold">
+                    <i class="fas ${p.icon} w-5 text-center text-xs opacity-60"></i>
+                    <span>${p.label}</span>
+                </a>
+            `).join('');
+        }
+
+        // ---- NAVIGATION ----
+        function navigate(id, label) {
+            document.getElementById('viewTitle').textContent = label;
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('sidebar-active'));
+            document.getElementById('link-'+id)?.classList.add('sidebar-active');
+
+            Object.values(charts).forEach(c => c.destroy && c.destroy());
+            charts = {};
+
+            const c = document.getElementById('viewContainer');
+            const views = { dash: renderDashboard, school: renderSchoolAdmin, parent: renderParentPortal, finance: renderFinance, teacher: renderTeacher, library: renderLibrary, transport: renderTransport, inventory: renderInventory, exams: renderExams, api: renderAPI };
+            (views[id] || (() => renderPlaceholder(c, label)))(c);
+        }
+
+        // ---- UI HELPERS ----
+        function toggleAI() { document.getElementById('aiPanel').classList.toggle('translate-x-full'); }
+        function toggleNotif() { document.getElementById('notifPanel').classList.toggle('hidden'); }
+        function toggleProfile() {}
+        function clearNotifs() { document.getElementById('notifCount').style.display = 'none'; document.getElementById('notifList').innerHTML = '<p class="text-center text-slate-400 text-sm py-8">All caught up!</p>'; }
+
+        function statCard(label, value, icon, color, trend, trendDir) {
+            const trendColor = trendDir === 'up' ? 'text-emerald-500' : trendDir === 'down' ? 'text-red-500' : 'text-slate-400';
+            const trendIcon = trendDir === 'up' ? 'fa-arrow-trend-up' : trendDir === 'down' ? 'fa-arrow-trend-down' : 'fa-minus';
+            return `<div class="card p-7">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="stat-icon bg-${color}-100 text-${color}-600"><i class="fas ${icon}"></i></div>
+                    <span class="flex items-center gap-1 ${trendColor} text-xs font-bold"><i class="fas ${trendIcon}"></i> ${trend}</span>
+                </div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">${label}</p>
+                <h4 class="text-3xl font-black text-slate-800 animate-count">${value}</h4>
+            </div>`;
+        }
+
+        function makeChart(id, config) {
+            setTimeout(() => {
+                const el = document.getElementById(id);
+                if (el) charts[id] = new Chart(el.getContext('2d'), config);
+            }, 100);
+        }
+
+        // ===================================================================
+        //  VIEW: DASHBOARD
+        // ===================================================================
+        function renderDashboard(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="flex items-end justify-between mb-2">
+                    <div>
+                        <h3 class="text-3xl font-black text-slate-800 tracking-tight">Good ${new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, ${role === 'SUPER_ADMIN' ? 'Admin' : role === 'TEACHER' ? 'Prof. Smith' : role === 'PARENT' ? 'Jane' : role === 'STUDENT' ? 'Alex' : 'Admin'}</h3>
+                        <p class="text-slate-500 font-medium mt-1">Here's what's happening across Global School System today.</p>
+                    </div>
+                    <p class="text-xs font-bold text-slate-400">${new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    ${statCard('Total Students','12,847','fa-user-graduate','indigo','+3.2%','up')}
+                    ${statCard('Active Staff','1,204','fa-users','emerald','+1.8%','up')}
+                    ${statCard('Term Revenue','$2.4M','fa-sack-dollar','amber','+12.5%','up')}
+                    ${statCard('Avg Attendance','94.6%','fa-calendar-check','sky','-0.4%','down')}
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="card p-8 lg:col-span-2">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="font-black text-sm text-slate-700">Enrollment Trend</h4>
+                            <div class="flex gap-2">
+                                <span class="badge bg-brand-100 text-brand-700">This Year</span>
+                                <span class="badge bg-slate-100 text-slate-500">Last Year</span>
+                            </div>
+                        </div>
+                        <canvas id="enrollChart" height="140"></canvas>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Department Split</h4>
+                        <canvas id="deptChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Recent Activity</h4>
+                        <div class="space-y-3">
+                            ${[
+                                { t:'Enrollment batch #482 processed', s:'3 min ago', i:'fa-user-plus', col:'indigo' },
+                                { t:'Finance report Q3 generated', s:'18 min ago', i:'fa-file-invoice-dollar', col:'emerald' },
+                                { t:'Library: 45 new books cataloged', s:'1 hr ago', i:'fa-book', col:'amber' },
+                                { t:'Bus Route #12 updated', s:'2 hr ago', i:'fa-bus', col:'sky' },
+                                { t:'System backup completed', s:'4 hr ago', i:'fa-shield-check', col:'slate' }
+                            ].map(a => `
+                                <div class="table-row">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 bg-${a.col}-100 text-${a.col}-600 rounded-xl flex items-center justify-center text-sm"><i class="fas ${a.i}"></i></div>
+                                        <div><p class="text-sm font-bold text-slate-700">${a.t}</p><p class="text-xs text-slate-400">${a.s}</p></div>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Quick Actions</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            ${[
+                                { l:'Add Student', i:'fa-user-plus', col:'indigo' },
+                                { l:'Record Payment', i:'fa-credit-card', col:'emerald' },
+                                { l:'Schedule Exam', i:'fa-calendar-plus', col:'amber' },
+                                { l:'Send Notice', i:'fa-envelope', col:'sky' },
+                                { l:'Generate Report', i:'fa-chart-bar', col:'violet' },
+                                { l:'System Settings', i:'fa-gear', col:'slate' }
+                            ].map(a => `
+                                <button class="p-5 bg-${a.col}-50 hover:bg-${a.col}-100 rounded-2xl text-left transition-colors group">
+                                    <i class="fas ${a.i} text-${a.col}-500 mb-2 text-lg group-hover:scale-110 transition-transform inline-block"></i>
+                                    <p class="text-sm font-bold text-slate-700">${a.l}</p>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-slate-950 to-indigo-950 p-10 rounded-[3rem] text-white relative overflow-hidden">
+                    <div class="relative z-10 flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Lumina AI Insight</p>
+                            <h3 class="text-2xl font-black mb-2">Attendance dipped 1.2% this week</h3>
+                            <p class="text-indigo-300 max-w-lg text-sm leading-relaxed">Lumina detected irregular patterns in Grades 7-9. Recommended action: review flu season protocols and send parent notifications.</p>
+                        </div>
+                        <button onclick="toggleAI()" class="bg-white text-slate-950 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shrink-0">Investigate</button>
+                    </div>
+                    <i class="fas fa-brain absolute -right-16 -bottom-16 text-[18rem] text-white/[0.03]"></i>
+                </div>
+            </div>`;
+
+            // Enrollment chart
+            makeChart('enrollChart', {
+                type: 'line',
+                data: { labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                    datasets: [
+                        { label: 'This Year', data: [980,1050,1120,1180,1250,1340,1280,1420,1510,1580,1620,1680], borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,0.08)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 3 },
+                        { label: 'Last Year', data: [900,940,1000,1020,1080,1140,1100,1200,1280,1340,1380,1420], borderColor: '#cbd5e1', backgroundColor: 'transparent', borderDash: [6,4], tension: 0.4, pointRadius: 0, borderWidth: 2 }
+                    ]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { weight: 700, size: 10 }, color: '#94a3b8' } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { weight: 700, size: 10 }, color: '#94a3b8' } } } }
+            });
+            // Department chart
+            makeChart('deptChart', {
+                type: 'doughnut',
+                data: { labels: ['Science','Arts','Commerce','Technology','Sports'], datasets: [{ data: [35,20,25,15,5], backgroundColor: ['#4f46e5','#06b6d4','#f59e0b','#10b981','#ec4899'], borderWidth: 0 }] },
+                options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', font: { weight: 700, size: 10 } } } } }
+            });
+        }
+
+        // ===================================================================
+        //  VIEW: SCHOOL MANAGEMENT
+        // ===================================================================
+        function renderSchoolAdmin(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    ${statCard('Total Enrolled','12,847','fa-user-graduate','indigo','+180 this month','up')}
+                    ${statCard('Staff Members','1,204','fa-id-badge','emerald','+12 new hires','up')}
+                    ${statCard('Active Classes','486','fa-screen-users','amber','98% occupied','up')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="card p-10">
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-8"><i class="fas fa-user-plus mr-2 text-brand-500"></i>Registration Engine</h3>
+                        <div class="space-y-5">
+                            <input type="text" placeholder="Full Name" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500 transition-all">
+                            <div class="grid grid-cols-2 gap-4">
+                                <select class="p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500"><option>Student</option><option>Staff</option><option>Parent</option></select>
+                                <input type="text" placeholder="Institutional ID" class="p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500">
+                            </div>
+                            <input type="email" placeholder="Email Address" class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500 transition-all">
+                            <select class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500"><option value="">Select Department</option><option>Science</option><option>Arts</option><option>Commerce</option><option>Technology</option></select>
+                            <button class="w-full py-4 bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-600/20 hover:bg-brand-500 transition-all active:scale-[0.98]">INITIALIZE REGISTRATION</button>
+                        </div>
+                    </div>
+                    <div class="card p-10">
+                        <div class="flex justify-between items-center mb-8">
+                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest"><i class="fas fa-database mr-2 text-brand-500"></i>System Registry</h3>
+                            <input type="text" placeholder="Search..." class="px-4 py-2 bg-slate-50 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-brand-200 w-40">
+                        </div>
+                        <div class="space-y-3">
+                            ${[
+                                { n:'Sarah Connor', r:'Staff — Science Dept', s:'Active', sc:'emerald' },
+                                { n:'John Doe', r:'Student — Grade 10A', s:'Active', sc:'emerald' },
+                                { n:'Ellen Ripley', r:'Parent — 2 children', s:'Active', sc:'emerald' },
+                                { n:'Marcus Webb', r:'Staff — IT Admin', s:'Active', sc:'emerald' },
+                                { n:'Lisa Park', r:'Student — Grade 12B', s:'On Leave', sc:'amber' },
+                                { n:'David Kim', r:'Teacher — Mathematics', s:'Active', sc:'emerald' }
+                            ].map(u => `
+                                <div class="table-row">
+                                    <div class="flex items-center gap-4">
+                                        <img src="https://ui-avatars.com/api/?name=${u.n.replace(' ','+')}&background=f1f5f9&color=475569&bold=true&size=40" class="w-10 h-10 rounded-xl">
+                                        <div><p class="text-sm font-bold text-slate-700">${u.n}</p><p class="text-[11px] text-slate-400 font-medium">${u.r}</p></div>
+                                    </div>
+                                    <span class="badge bg-${u.sc}-100 text-${u.sc}-700">${u.s}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ===================================================================
+        //  VIEW: PARENT PORTAL
+        // ===================================================================
+        function renderParentPortal(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="card p-10 flex items-center justify-between">
+                    <div class="flex items-center gap-8">
+                        <img src="https://ui-avatars.com/api/?name=Michael+S&background=4f46e5&color=fff&bold=true&size=80" class="w-20 h-20 rounded-[2rem] shadow-xl">
+                        <div>
+                            <h3 class="text-3xl font-black text-slate-900 tracking-tighter">Michael Sterling</h3>
+                            <p class="badge bg-brand-100 text-brand-700 mt-2 inline-block">Class 10-Alpha &bull; Roll #44</p>
+                        </div>
+                    </div>
+                    <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Academic Status</p><span class="text-emerald-500 font-black text-xl">EXCELLENT</span></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${statCard('Attendance','96%','fa-calendar-check','emerald','+2.1%','up')}
+                    ${statCard('Avg GPA','3.88','fa-graduation-cap','indigo','+0.12','up')}
+                    ${statCard('Behavior','Positive','fa-face-smile','sky','No incidents','up')}
+                    ${statCard('Fee Balance','$0.00','fa-wallet','slate','Paid in full','up')}
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Subject Performance</h4>
+                        <canvas id="subjectChart" height="200"></canvas>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Grade Breakdown</h4>
+                        <div class="space-y-4">
+                            ${[
+                                { s:'Mathematics', g:'A+', p:97, col:'indigo' },
+                                { s:'Physics', g:'A', p:92, col:'sky' },
+                                { s:'English', g:'A', p:90, col:'emerald' },
+                                { s:'Chemistry', g:'B+', p:86, col:'amber' },
+                                { s:'History', g:'A-', p:88, col:'violet' },
+                                { s:'Computer Sci', g:'A+', p:98, col:'rose' }
+                            ].map(s => `
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1"><span class="font-bold text-slate-700">${s.s}</span><span class="font-black text-${s.col}-600">${s.g} (${s.p}%)</span></div>
+                                    <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-${s.col}-500 rounded-full progress-bar" style="width:0%" data-width="${s.p}%"></div></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-slate-950 to-indigo-950 p-10 rounded-[3rem] text-white relative overflow-hidden">
+                    <div class="relative z-10 flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Lumina Parent Insights</p>
+                            <h3 class="text-2xl font-black mb-2">Scholarship Eligible</h3>
+                            <p class="text-indigo-300 max-w-lg text-sm">Predictive analysis suggests Michael is highly eligible for the Mathematics Scholarship next term based on his consistent 97%+ scores.</p>
+                        </div>
+                        <button class="bg-white text-slate-950 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shrink-0">Download Report</button>
+                    </div>
+                    <i class="fas fa-award absolute -right-12 -bottom-12 text-[14rem] text-white/[0.03]"></i>
+                </div>
+            </div>`;
+
+            makeChart('subjectChart', {
+                type: 'radar',
+                data: { labels: ['Math','Physics','English','Chemistry','History','Comp Sci'], datasets: [{ label: 'Michael', data: [97,92,90,86,88,98], borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,0.15)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#4f46e5' }, { label: 'Class Avg', data: [78,74,82,70,76,72], borderColor: '#cbd5e1', backgroundColor: 'rgba(203,213,225,0.1)', borderWidth: 2, borderDash: [4,4], pointRadius: 3, pointBackgroundColor: '#cbd5e1' }] },
+                options: { responsive: true, scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 20, font: { size: 9, weight: 700 }, color: '#94a3b8' }, grid: { color: '#f1f5f9' }, pointLabels: { font: { size: 11, weight: 700 }, color: '#475569' } } }, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', font: { weight: 700, size: 10 } } } } }
+            });
+            setTimeout(() => document.querySelectorAll('.progress-bar').forEach(b => b.style.width = b.dataset.width), 200);
+        }
+
+        // ===================================================================
+        //  VIEW: FINANCE HUB
+        // ===================================================================
+        function renderFinance(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${statCard('Total Revenue','$2.4M','fa-sack-dollar','emerald','+12.5%','up')}
+                    ${statCard('Outstanding Fees','$186K','fa-hourglass-half','amber','-8.2%','down')}
+                    ${statCard('Expenses','$1.8M','fa-money-bill-transfer','red','On budget','up')}
+                    ${statCard('Net Surplus','$620K','fa-piggy-bank','indigo','+22.1%','up')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="card p-8 lg:col-span-2">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Revenue vs Expenses</h4>
+                        <canvas id="financeChart" height="130"></canvas>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Budget Allocation</h4>
+                        <canvas id="budgetChart" height="220"></canvas>
+                    </div>
+                </div>
+                <div class="card p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="font-black text-sm text-slate-700">Recent Transactions</h4>
+                        <button class="badge bg-brand-100 text-brand-700 hover:bg-brand-200 transition-colors cursor-pointer">Export CSV</button>
+                    </div>
+                    <div class="space-y-3">
+                        ${[
+                            { d:'Fee Payment — Sterling Family', a:'+$3,200', t:'Today', col:'emerald', i:'fa-arrow-down' },
+                            { d:'Lab Equipment Purchase', a:'-$12,450', t:'Yesterday', col:'red', i:'fa-arrow-up' },
+                            { d:'Govt Grant Received', a:'+$50,000', t:'Dec 14', col:'emerald', i:'fa-arrow-down' },
+                            { d:'Staff Payroll — December', a:'-$284,000', t:'Dec 1', col:'red', i:'fa-arrow-up' },
+                            { d:'Fee Collection Batch #96', a:'+$128,600', t:'Nov 28', col:'emerald', i:'fa-arrow-down' }
+                        ].map(t => `
+                            <div class="table-row">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-${t.col}-100 text-${t.col}-600 rounded-xl flex items-center justify-center"><i class="fas ${t.i} text-sm"></i></div>
+                                    <div><p class="text-sm font-bold text-slate-700">${t.d}</p><p class="text-xs text-slate-400">${t.t}</p></div>
+                                </div>
+                                <span class="font-black text-sm ${t.col === 'emerald' ? 'text-emerald-600' : 'text-red-500'}">${t.a}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>`;
+
+            makeChart('financeChart', {
+                type: 'bar',
+                data: { labels: ['Jul','Aug','Sep','Oct','Nov','Dec'], datasets: [
+                    { label: 'Revenue', data: [380000,420000,395000,440000,460000,485000], backgroundColor: '#4f46e5', borderRadius: 8, barPercentage: 0.6 },
+                    { label: 'Expenses', data: [290000,310000,305000,330000,340000,350000], backgroundColor: '#e2e8f0', borderRadius: 8, barPercentage: 0.6 }
+                ] },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', font: { weight: 700, size: 10 } } } }, scales: { x: { grid: { display: false }, ticks: { font: { weight: 700, size: 10 } } }, y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => '$'+v/1000+'K', font: { weight: 700, size: 10 } } } } }
+            });
+            makeChart('budgetChart', {
+                type: 'doughnut',
+                data: { labels: ['Salaries','Infrastructure','Academics','Operations','Reserve'], datasets: [{ data: [45,20,18,12,5], backgroundColor: ['#4f46e5','#06b6d4','#f59e0b','#10b981','#e2e8f0'], borderWidth: 0 }] },
+                options: { responsive: true, cutout: '68%', plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { weight: 700, size: 10 } } } } }
+            });
+        }
+
+        // ===================================================================
+        //  VIEW: TEACHER / ACADEMIC DESK
+        // ===================================================================
+        function renderTeacher(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${statCard('My Classes','6','fa-chalkboard','indigo','3 today','up')}
+                    ${statCard('Students','187','fa-users','emerald','All assigned','up')}
+                    ${statCard('Avg Score','82.4%','fa-chart-line','amber','+3.1%','up')}
+                    ${statCard('Pending Tasks','8','fa-clipboard-list','rose','3 urgent','down')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6"><i class="fas fa-clock mr-2 text-brand-500"></i>Today's Schedule</h4>
+                        <div class="space-y-3">
+                            ${[
+                                { t:'08:00 — 09:30', c:'Mathematics (Grade 10A)', r:'Room 204', s:'completed' },
+                                { t:'09:45 — 11:15', c:'Physics (Grade 11B)', r:'Lab 3', s:'completed' },
+                                { t:'11:30 — 13:00', c:'Mathematics (Grade 12A)', r:'Room 310', s:'active' },
+                                { t:'14:00 — 15:30', c:'Physics (Grade 10C)', r:'Lab 1', s:'upcoming' },
+                                { t:'15:45 — 16:30', c:'Faculty Meeting', r:'Conference Hall', s:'upcoming' }
+                            ].map(s => `
+                                <div class="table-row ${s.s === 'active' ? '!bg-brand-50 ring-2 ring-brand-200' : ''}">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 ${s.s === 'completed' ? 'bg-emerald-100 text-emerald-600' : s.s === 'active' ? 'bg-brand-100 text-brand-600' : 'bg-slate-100 text-slate-400'} rounded-xl flex items-center justify-center text-sm">
+                                            <i class="fas ${s.s === 'completed' ? 'fa-check' : s.s === 'active' ? 'fa-circle-dot' : 'fa-clock'}"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-bold text-slate-700">${s.c}</p>
+                                            <p class="text-xs text-slate-400">${s.t} &bull; ${s.r}</p>
+                                        </div>
+                                    </div>
+                                    <span class="badge ${s.s === 'completed' ? 'bg-emerald-100 text-emerald-700' : s.s === 'active' ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-500'}">${s.s}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6"><i class="fas fa-pen-to-square mr-2 text-brand-500"></i>Quick Grade Entry</h4>
+                        <div class="space-y-4">
+                            <select class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500">
+                                <option>Mathematics — Grade 10A</option><option>Physics — Grade 11B</option><option>Mathematics — Grade 12A</option>
+                            </select>
+                            <select class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500">
+                                <option>Midterm Exam</option><option>Quiz 4</option><option>Assignment 6</option>
+                            </select>
+                            <div class="bg-slate-50 rounded-2xl p-4 space-y-3 max-h-48 overflow-y-auto">
+                                ${['Alice Johnson','Bob Chen','Clara Rodriguez','David Kim','Emma Wilson'].map((n,i) => `
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-bold text-slate-600">${n}</span>
+                                        <input type="number" placeholder="0-100" min="0" max="100" class="w-20 p-2 bg-white rounded-xl text-center font-bold text-sm outline-none border-2 border-transparent focus:border-brand-500" value="${[95,88,92,78,96][i]}">
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button class="w-full py-4 bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-600/20 hover:bg-brand-500 transition-all active:scale-[0.98]">SAVE GRADES</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ===================================================================
+        //  VIEW: LIBRARY
+        // ===================================================================
+        function renderLibrary(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${statCard('Total Books','24,580','fa-book','indigo','+340 this month','up')}
+                    ${statCard('Checked Out','1,842','fa-book-open','amber','14.2% overdue','down')}
+                    ${statCard('Digital Resources','8,420','fa-laptop','sky','+560 new','up')}
+                    ${statCard('Active Members','4,210','fa-id-card','emerald','92% students','up')}
+                </div>
+                <div class="card p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="font-black text-sm text-slate-700"><i class="fas fa-search mr-2 text-brand-500"></i>Catalog Search</h4>
+                    </div>
+                    <div class="flex gap-4 mb-8">
+                        <input type="text" placeholder="Search by title, author, or ISBN..." class="flex-1 p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500 transition-all">
+                        <select class="p-4 bg-slate-50 rounded-2xl font-bold outline-none border-2 border-transparent focus:border-brand-500"><option>All Categories</option><option>Science</option><option>Literature</option><option>History</option><option>Technology</option></select>
+                        <button class="px-6 bg-brand-600 text-white rounded-2xl font-black hover:bg-brand-500 transition-all">Search</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        ${[
+                            { t:'Advanced Physics', a:'Richard Feynman', cat:'Science', avail: 4, total: 8, col:'indigo' },
+                            { t:'Calculus Made Easy', a:'Silvanus P. Thompson', cat:'Mathematics', avail: 12, total: 15, col:'amber' },
+                            { t:'To Kill a Mockingbird', a:'Harper Lee', cat:'Literature', avail: 0, total: 6, col:'rose' },
+                            { t:'Clean Code', a:'Robert C. Martin', cat:'Technology', avail: 3, total: 5, col:'emerald' },
+                            { t:'World History Vol. III', a:'J.M. Roberts', cat:'History', avail: 7, total: 10, col:'sky' },
+                            { t:'The Art of War', a:'Sun Tzu', cat:'Philosophy', avail: 2, total: 4, col:'violet' }
+                        ].map(b => `
+                            <div class="p-5 bg-slate-50 rounded-2xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-slate-100 cursor-pointer">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="w-10 h-10 bg-${b.col}-100 text-${b.col}-600 rounded-xl flex items-center justify-center"><i class="fas fa-book text-sm"></i></div>
+                                    <span class="badge ${b.avail > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">${b.avail > 0 ? b.avail+' available' : 'Checked out'}</span>
+                                </div>
+                                <h5 class="font-black text-slate-800 text-sm mb-1">${b.t}</h5>
+                                <p class="text-xs text-slate-400 font-medium">${b.a} &bull; ${b.cat}</p>
+                                <div class="mt-3 w-full h-1.5 bg-slate-200 rounded-full overflow-hidden"><div class="h-full bg-${b.col}-500 rounded-full" style="width:${(b.avail/b.total)*100}%"></div></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ===================================================================
+        //  VIEW: FLEET SYNC / TRANSPORT
+        // ===================================================================
+        function renderTransport(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${statCard('Active Buses','32','fa-bus','indigo','28 on route','up')}
+                    ${statCard('Students Served','6,420','fa-users','emerald','98% coverage','up')}
+                    ${statCard('Total Routes','48','fa-route','sky','All optimized','up')}
+                    ${statCard('Maintenance Due','4','fa-wrench','amber','2 urgent','down')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6"><i class="fas fa-satellite-dish mr-2 text-brand-500"></i>Live Fleet Status</h4>
+                        <div class="space-y-3">
+                            ${[
+                                { id:'BUS-01', r:'Route A — Downtown Circuit', d:'James Wilson', s:'On Route', sc:'emerald', icon:'fa-circle-dot' },
+                                { id:'BUS-02', r:'Route B — Eastside Loop', d:'Maria Garcia', s:'On Route', sc:'emerald', icon:'fa-circle-dot' },
+                                { id:'BUS-07', r:'Route G — North Hills', d:'Robert Lee', s:'Maintenance', sc:'red', icon:'fa-wrench' },
+                                { id:'BUS-12', r:'Route L — Airport Road', d:'Priya Sharma', s:'On Route', sc:'emerald', icon:'fa-circle-dot' },
+                                { id:'BUS-15', r:'Route O — University Belt', d:'Tom Davis', s:'Returning', sc:'amber', icon:'fa-rotate-left' },
+                                { id:'BUS-22', r:'Route V — Lakeside', d:'Anna Kowalski', s:'Standby', sc:'slate', icon:'fa-pause' }
+                            ].map(b => `
+                                <div class="table-row">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 bg-${b.sc}-100 text-${b.sc}-600 rounded-xl flex items-center justify-center text-sm"><i class="fas ${b.icon}"></i></div>
+                                        <div>
+                                            <p class="text-sm font-bold text-slate-700">${b.id} — ${b.r}</p>
+                                            <p class="text-xs text-slate-400">Driver: ${b.d}</p>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-${b.sc}-100 text-${b.sc}-700">${b.s}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Fuel & Distance Analytics</h4>
+                        <canvas id="fleetChart" height="230"></canvas>
+                    </div>
+                </div>
+            </div>`;
+
+            makeChart('fleetChart', {
+                type: 'bar',
+                data: { labels: ['Mon','Tue','Wed','Thu','Fri'], datasets: [
+                    { label: 'Distance (km)', data: [1240,1180,1310,1280,1350], backgroundColor: '#4f46e5', borderRadius: 6, barPercentage: 0.5 },
+                    { label: 'Fuel (L)', data: [340,320,360,350,370], backgroundColor: '#f59e0b', borderRadius: 6, barPercentage: 0.5 }
+                ] },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', font: { weight: 700, size: 10 } } } }, scales: { x: { grid: { display: false }, ticks: { font: { weight: 700, size: 10 } } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { weight: 700, size: 10 } } } } }
+            });
+        }
+
+        // ===================================================================
+        //  VIEW: INVENTORY / STOCK LOGIC
+        // ===================================================================
+        function renderInventory(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${statCard('Total Items','8,640','fa-boxes-stacked','indigo','All tracked','up')}
+                    ${statCard('Low Stock','23','fa-triangle-exclamation','amber','Action needed','down')}
+                    ${statCard('Orders Pending','7','fa-truck-loading','sky','3 arriving today','up')}
+                    ${statCard('Total Value','$1.2M','fa-tag','emerald','Audited Dec 1','up')}
+                </div>
+                <div class="card p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="font-black text-sm text-slate-700"><i class="fas fa-boxes-stacked mr-2 text-brand-500"></i>Inventory Overview</h4>
+                        <div class="flex gap-2">
+                            <button class="badge bg-brand-100 text-brand-700 hover:bg-brand-200 transition-colors cursor-pointer">+ New Item</button>
+                            <button class="badge bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer">Export</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-6 px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                        <span class="col-span-2">Item</span><span>Category</span><span class="text-center">Stock</span><span class="text-center">Status</span><span class="text-right">Value</span>
+                    </div>
+                    <div class="space-y-2">
+                        ${[
+                            { n:'Lab Microscopes', cat:'Equipment', stock:45, min:10, val:'$67,500' },
+                            { n:'Whiteboard Markers', cat:'Supplies', stock:8, min:50, val:'$240' },
+                            { n:'Student Desks', cat:'Furniture', stock:120, min:20, val:'$36,000' },
+                            { n:'Printer Cartridges', cat:'IT Supplies', stock:3, min:15, val:'$450' },
+                            { n:'Chemistry Reagents', cat:'Lab', stock:28, min:25, val:'$4,200' },
+                            { n:'Sports Equipment Set', cat:'Athletics', stock:15, min:5, val:'$7,500' },
+                            { n:'Library Books (Batch)', cat:'Library', stock:340, min:100, val:'$10,200' }
+                        ].map(it => {
+                            const status = it.stock <= it.min * 0.3 ? { l:'Critical', c:'red' } : it.stock <= it.min ? { l:'Low', c:'amber' } : { l:'In Stock', c:'emerald' };
+                            return `<div class="grid grid-cols-6 items-center px-6 py-4 bg-slate-50/50 rounded-2xl hover:bg-brand-50 transition-colors cursor-pointer">
+                                <span class="col-span-2 text-sm font-bold text-slate-700">${it.n}</span>
+                                <span class="text-xs font-medium text-slate-500">${it.cat}</span>
+                                <span class="text-center text-sm font-black text-slate-700">${it.stock}</span>
+                                <span class="text-center"><span class="badge bg-${status.c}-100 text-${status.c}-700">${status.l}</span></span>
+                                <span class="text-right text-sm font-bold text-slate-600">${it.val}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // ===================================================================
+        //  VIEW: ASSESSMENT ENGINE / EXAMS
+        // ===================================================================
+        function renderExams(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${statCard('Upcoming Exams','12','fa-file-circle-check','indigo','Next: Dec 20','up')}
+                    ${statCard('Avg Pass Rate','87.3%','fa-chart-line','emerald','+2.4%','up')}
+                    ${statCard('Papers Graded','2,840','fa-check-double','sky','94% complete','up')}
+                    ${statCard('Pending Reviews','156','fa-hourglass-half','amber','Due Dec 18','down')}
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="card p-8 lg:col-span-2">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Pass Rate by Subject</h4>
+                        <canvas id="examChart" height="140"></canvas>
+                    </div>
+                    <div class="card p-8">
+                        <h4 class="font-black text-sm text-slate-700 mb-6">Grade Distribution</h4>
+                        <canvas id="gradeDistChart" height="220"></canvas>
+                    </div>
+                </div>
+                <div class="card p-8">
+                    <h4 class="font-black text-sm text-slate-700 mb-6"><i class="fas fa-calendar-days mr-2 text-brand-500"></i>Upcoming Examinations</h4>
+                    <div class="space-y-3">
+                        ${[
+                            { s:'Mathematics Final', g:'Grade 10-12', d:'Dec 20, 2024', t:'09:00 — 12:00', st:'Scheduled', sc:'indigo' },
+                            { s:'Physics Midterm', g:'Grade 11', d:'Dec 22, 2024', t:'10:00 — 12:30', st:'Scheduled', sc:'sky' },
+                            { s:'English Literature', g:'Grade 9-10', d:'Dec 23, 2024', t:'09:00 — 11:00', st:'Scheduled', sc:'amber' },
+                            { s:'Chemistry Practical', g:'Grade 11-12', d:'Jan 5, 2025', t:'14:00 — 17:00', st:'Draft', sc:'slate' },
+                            { s:'Computer Science', g:'Grade 10-12', d:'Jan 8, 2025', t:'09:00 — 11:30', st:'Draft', sc:'slate' }
+                        ].map(e => `
+                            <div class="table-row">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-${e.sc}-100 text-${e.sc}-600 rounded-xl flex items-center justify-center text-sm"><i class="fas fa-file-alt"></i></div>
+                                    <div><p class="text-sm font-bold text-slate-700">${e.s}</p><p class="text-xs text-slate-400">${e.g} &bull; ${e.d} &bull; ${e.t}</p></div>
+                                </div>
+                                <span class="badge bg-${e.sc}-100 text-${e.sc}-700">${e.st}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>`;
+
+            makeChart('examChart', {
+                type: 'bar',
+                data: { labels: ['Math','Physics','English','Chemistry','History','Comp Sci','Biology'], datasets: [
+                    { label: 'Pass Rate %', data: [91,84,93,79,88,86,90], backgroundColor: ['#4f46e5','#06b6d4','#f59e0b','#ec4899','#10b981','#8b5cf6','#f97316'], borderRadius: 8, barPercentage: 0.6 }
+                ] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { weight: 700, size: 10 } } }, y: { grid: { color: '#f1f5f9' }, max: 100, ticks: { callback: v => v+'%', font: { weight: 700, size: 10 } } } } }
+            });
+            makeChart('gradeDistChart', {
+                type: 'doughnut',
+                data: { labels: ['A+/A','B+/B','C+/C','D','F'], datasets: [{ data: [28,35,22,10,5], backgroundColor: ['#4f46e5','#06b6d4','#f59e0b','#f97316','#ef4444'], borderWidth: 0 }] },
+                options: { responsive: true, cutout: '68%', plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { weight: 700, size: 10 } } } } }
+            });
+        }
+
+        // ===================================================================
+        //  VIEW: API GATEWAY
+        // ===================================================================
+        function renderAPI(c) {
+            c.innerHTML = `<div class="animate-view space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${statCard('API Uptime','99.97%','fa-signal','emerald','30-day avg','up')}
+                    ${statCard('Requests/min','4,280','fa-bolt','indigo','Peak: 8.2K','up')}
+                    ${statCard('Avg Latency','42ms','fa-gauge-high','sky','-8ms from avg','up')}
+                    ${statCard('Error Rate','0.03%','fa-bug','emerald','Within SLA','up')}
+                </div>
+                <div class="card p-8">
+                    <h4 class="font-black text-sm text-slate-700 mb-6">API Traffic (24h)</h4>
+                    <canvas id="apiChart" height="100"></canvas>
+                </div>
+                <div class="card p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="font-black text-sm text-slate-700"><i class="fas fa-code-branch mr-2 text-brand-500"></i>Endpoint Registry</h4>
+                        <span class="badge bg-emerald-100 text-emerald-700">All Systems Operational</span>
+                    </div>
+                    <div class="space-y-3">
+                        ${[
+                            { m:'GET', e:'/api/v3/students', d:'Student records', l:'12ms', s:'200', r:'2.4K/min' },
+                            { m:'POST', e:'/api/v3/enrollment', d:'New enrollment', l:'45ms', s:'201', r:'180/min' },
+                            { m:'GET', e:'/api/v3/grades', d:'Grade retrieval', l:'18ms', s:'200', r:'1.8K/min' },
+                            { m:'PUT', e:'/api/v3/attendance', d:'Attendance update', l:'32ms', s:'200', r:'960/min' },
+                            { m:'GET', e:'/api/v3/finance/summary', d:'Finance overview', l:'68ms', s:'200', r:'420/min' },
+                            { m:'DELETE', e:'/api/v3/cache', d:'Cache purge', l:'8ms', s:'204', r:'12/min' }
+                        ].map(ep => `
+                            <div class="grid grid-cols-6 items-center px-6 py-4 bg-slate-50/50 rounded-2xl hover:bg-brand-50 transition-colors cursor-pointer">
+                                <span class="badge w-fit ${ep.m === 'GET' ? 'bg-emerald-100 text-emerald-700' : ep.m === 'POST' ? 'bg-blue-100 text-blue-700' : ep.m === 'PUT' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}">${ep.m}</span>
+                                <span class="col-span-2 text-sm font-mono font-bold text-slate-700">${ep.e}</span>
+                                <span class="text-xs text-slate-500">${ep.l} avg</span>
+                                <span class="text-center badge w-fit bg-emerald-100 text-emerald-700">${ep.s}</span>
+                                <span class="text-right text-xs font-bold text-slate-500">${ep.r}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>`;
+
+            makeChart('apiChart', {
+                type: 'line',
+                data: { labels: Array.from({length:24}, (_,i) => `${String(i).padStart(2,'0')}:00`),
+                    datasets: [{ label: 'Requests', data: [1200,800,420,280,220,180,340,1800,3200,4100,4280,3900,3600,4000,4200,4100,3800,3200,2800,2400,2100,1900,1600,1400], borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,0.06)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { weight: 700, size: 9 } } }, y: { grid: { color: '#f1f5f9' }, ticks: { font: { weight: 700, size: 9 } } } } }
+            });
+        }
+
+        // ===================================================================
+        //  PLACEHOLDER
+        // ===================================================================
+        function renderPlaceholder(c, label) {
+            c.innerHTML = `<div class="animate-view flex items-center justify-center h-full"><div class="text-center"><div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-cubes text-4xl text-slate-300"></i></div><h3 class="text-2xl font-black text-slate-300 tracking-tight">${label}</h3><p class="text-slate-400 mt-2 font-medium">Module coming soon</p></div></div>`;
+        }
+
+        // ===================================================================
+        //  LUMINA AI CHAT
+        // ===================================================================
+        function quickAsk(q) { document.getElementById('aiChatInput').value = q; sendToLumina(); }
+
+        async function sendToLumina() {
+            const input = document.getElementById('aiChatInput');
+            const chat = document.getElementById('chatWindow');
+            if (!input.value.trim()) return;
+            const userQuery = input.value.trim();
+
+            // User message
+            chat.innerHTML += `<div class="p-4 bg-slate-100 rounded-3xl rounded-tr-lg text-sm font-bold text-slate-700 shadow-sm">${userQuery}</div>`;
+            input.value = "";
+
+            // Typing indicator
+            const typingId = 'typing-' + Date.now();
+            chat.innerHTML += `<div id="${typingId}" class="flex gap-1.5 p-4"><span class="w-2.5 h-2.5 bg-indigo-400 rounded-full typing-dot"></span><span class="w-2.5 h-2.5 bg-indigo-400 rounded-full typing-dot"></span><span class="w-2.5 h-2.5 bg-indigo-400 rounded-full typing-dot"></span></div>`;
+            chat.scrollTop = chat.scrollHeight;
+
+            const q = userQuery.toLowerCase();
+            let res = '';
+
+            setTimeout(() => {
+                document.getElementById(typingId)?.remove();
+
+                if (q.includes('enroll') || q.includes('student') || q.includes('registration'))
+                    res = `📊 <strong>Enrollment Analytics:</strong><br><br>• Current enrollment: <strong>12,847 students</strong> (+3.2% YoY)<br>• New admissions this month: <strong>180</strong><br>• Retention rate: <strong>96.8%</strong><br>• Waitlist: <strong>342 applicants</strong><br><br>Science dept leads with 35% of total enrollment. Shall I generate the full breakdown?`;
+                else if (q.includes('fee') || q.includes('finance') || q.includes('revenue') || q.includes('payment'))
+                    res = `💰 <strong>Finance Overview:</strong><br><br>• Term revenue: <strong>$2.4M</strong> (+12.5%)<br>• Outstanding fees: <strong>$186K</strong> (92% collected)<br>• 12 students overdue &gt; 30 days<br>• Govt grant pending: <strong>$50K</strong><br><br>Recommendation: Send automated reminders to overdue accounts this week.`;
+                else if (q.includes('grade') || q.includes('score') || q.includes('academic') || q.includes('perform'))
+                    res = `📈 <strong>Academic Performance:</strong><br><br>• Institution GPA: <strong>3.42</strong> (up from 3.38)<br>• Top subject: Computer Science (<strong>86%</strong> avg)<br>• Needs attention: Chemistry (<strong>79%</strong> pass rate)<br>• Honor roll students: <strong>1,284</strong> (10% of student body)<br><br>Trend analysis shows Grade 10 improved most significantly this semester.`;
+                else if (q.includes('attend'))
+                    res = `📋 <strong>Attendance Report:</strong><br><br>• Today's average: <strong>94.6%</strong><br>• Grades 7-9 showing -1.2% dip (possible seasonal illness)<br>• Perfect attendance streak: <strong>847 students</strong><br>• Chronic absentees (>10%): <strong>23 students</strong><br><br>⚠️ Recommend: Activate health protocols for middle school.`;
+                else if (q.includes('top') || q.includes('best') || q.includes('performer'))
+                    res = `🏆 <strong>Top Performers — Current Term:</strong><br><br>1. <strong>Michael Sterling</strong> — GPA 3.88 (Grade 10A)<br>2. <strong>Sarah Kim</strong> — GPA 3.85 (Grade 12B)<br>3. <strong>James Chen</strong> — GPA 3.82 (Grade 11A)<br>4. <strong>Emma Wilson</strong> — GPA 3.80 (Grade 10C)<br>5. <strong>Alex Doe</strong> — GPA 3.79 (Grade 12A)<br><br>3 of the top 5 are eligible for academic scholarships.`;
+                else if (q.includes('bus') || q.includes('transport') || q.includes('fleet') || q.includes('route'))
+                    res = `🚌 <strong>Fleet Status:</strong><br><br>• Active buses: <strong>28/32</strong> currently on route<br>• BUS-07: In maintenance (brake inspection)<br>• Average route time today: <strong>42 min</strong> (-3 min from avg)<br>• Fuel efficiency: <strong>3.7 km/L</strong><br><br>All GPS trackers online. Next scheduled maintenance: BUS-15 on Friday.`;
+                else if (q.includes('librar') || q.includes('book'))
+                    res = `📚 <strong>Library Analytics:</strong><br><br>• Collection size: <strong>24,580 volumes</strong><br>• Currently checked out: <strong>1,842</strong><br>• Overdue returns: <strong>262</strong> (14.2%)<br>• Most borrowed: "Clean Code" by R. Martin<br>• Digital resource usage up <strong>23%</strong> this month<br><br>Suggest: Expand the Computer Science section based on demand trends.`;
+                else if (q.includes('inventory') || q.includes('stock') || q.includes('supply'))
+                    res = `📦 <strong>Inventory Alert:</strong><br><br>• <strong>23 items</strong> below minimum threshold<br>• Critical: Printer Cartridges (3 remaining)<br>• Critical: Whiteboard Markers (8 remaining)<br>• Total inventory value: <strong>$1.2M</strong><br>• 7 purchase orders pending delivery<br><br>Action: Auto-reorder initiated for 5 critical items.`;
+                else if (q.includes('exam') || q.includes('test') || q.includes('assessment'))
+                    res = `📝 <strong>Assessment Summary:</strong><br><br>• Next exam: Mathematics Final — <strong>Dec 20</strong><br>• Papers graded: <strong>2,840/3,020</strong> (94%)<br>• Average pass rate: <strong>87.3%</strong> (+2.4%)<br>• 156 reviews pending (deadline: Dec 18)<br><br>Grade 12 finals preparation on track. All question papers approved.`;
+                else if (q.includes('help') || q.includes('what can'))
+                    res = `🤖 I can help with:<br><br>• <strong>Enrollment</strong> — student counts, trends, waitlists<br>• <strong>Finance</strong> — revenue, fees, budgets<br>• <strong>Academics</strong> — grades, pass rates, top performers<br>• <strong>Attendance</strong> — daily reports, patterns, alerts<br>• <strong>Transport</strong> — fleet status, routes, maintenance<br>• <strong>Library</strong> — catalog, borrowing analytics<br>• <strong>Inventory</strong> — stock levels, reorder alerts<br>• <strong>Exams</strong> — schedules, results, grading progress<br><br>Just ask in natural language!`;
+                else
+                    res = `I've analyzed your query across all 13 core modules. Here's what I found:<br><br>• System health: <strong>All modules operational</strong><br>• Firebase connection: <strong>Active</strong><br>• Last sync: <strong>${new Date().toLocaleTimeString()}</strong><br><br>Could you be more specific? Try asking about <em>enrollment</em>, <em>finance</em>, <em>attendance</em>, <em>grades</em>, or <em>transport</em>.`;
+
+                chat.innerHTML += `<div class="p-5 bg-brand-600 text-white rounded-3xl rounded-tl-lg text-sm font-medium shadow-xl leading-relaxed">
+                    <p class="font-black text-[10px] uppercase tracking-widest mb-2 opacity-70">Lumina AI</p>${res}</div>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 600 + Math.random() * 800);
+        }
+    </script>
+</body>
+</html>
